@@ -1,0 +1,144 @@
+#compdef dgit
+
+# set -x #DEBUG - Display commands and their arguments as they are executed.
+# set -v #VERBOSE - Display shell input lines as they are read.
+# set -n #EVALUATE - Check syntax of the script but don't execute.
+
+typeset -A opt_args
+local context state line curcontext="$curcontext"
+
+zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}'
+zstyle ':completion:*' verbose yes
+zstyle ':completion:ndd:descriptions' format '%B%d%b' # red color
+
+sv=("s" "v")
+
+_arguments -C \
+    '1:primary:->pri' \
+    '2:secondary:->sec' \
+    '*::arg:->args'
+
+case "$state" in
+    pri)
+        local settings commands extra
+        settings=(
+            'init\:init\ project'
+            'i\:init\ project'
+            'teardown\:teardown\ project'
+            't\:teardown\ project'
+        )
+        commands=(
+            'save\:save\ process'
+            's\:save\ process'
+            'list\:list\ saved\ process'
+            'l\:list\ saved\ process'
+            'checkout\:checkout\ process'
+            'c\:checkout\ process'
+        )
+        extras=(
+            'help\:show\ help\ text'
+            'h\:show\ help\ text'
+        )
+
+        # _describe 'action' commands
+        _alternative \
+            "setting:settings:(($settings))" \
+            "command:commands:(($commands))" \
+            "extra:extras:(($extras))"
+        ;;
+    sec)
+        case "${words[2]}" in
+            init | i | teardown | t | help | h)
+                _message 'No more argument'
+                ;;
+            checkout | c)
+                ! [ -d .git ] && _message "initial project first" && return 1
+
+                save_commit="$(git rev-parse HEAD)"
+                git checkout "master" &>/dev/null
+
+                git_commits=()
+                while IFS= read -r line; do
+                    git_commits+=("$line")
+                done <<<"$(git log --format=format:%h 2>/dev/null)"
+
+                git_tags=()
+                while IFS= read -r line; do
+                    git_tags+=("$line")
+                done <<<"$(git show-ref --tags | sed -e "s/.*tags\///" 2>/dev/null)"
+
+                git checkout "$save_commit" &>/dev/null
+
+                _alternative \
+                    'type:type:((state\:"state keyword" s\:"state keyword" version\:"version keyword" v\:"version keyword" latest\:"latest work"))' \
+                    "commit:state:(${git_commits[*]})" \
+                    "tag:version:(${git_tags[*]})"
+
+                ;;
+            *)
+                ! [ -d .git ] && _message "initial project first" && return 1
+                local commands
+                commands=(
+                    'version:version keyword'
+                    'v:version keyword'
+                    'state:state keyword'
+                    's:state keyword'
+                )
+                [[ ${words[2]} != "save" ]] && [[ ${words[2]} != "s" ]] &&
+                    commands+=('all:all keyword' 'a:all keyword')
+
+                _describe 'type' commands
+                ;;
+        esac
+        ;;
+    args)
+        case "${words[1]}-${words[2]}" in
+            save-state | save-s | s-state | s-s)
+                _message 'Enter message (optional)'
+                ;;
+            save-version | save-v | s-version | s-v)
+                [ -n "${words[3]}" ] &&
+                    _message 'Enter message (optional)' ||
+                    _message 'Enter version name'
+                ;;
+            list-state | list-s | l-state | l-s | list-version | list-v | l-version | l-v)
+                _message 'No more argument'
+                ;;
+            checkout-state | checkout-s | s-state | s-s)
+                [ ${#words[@]} -gt 3 ] && _message 'No more argument' && return 0
+
+                save_commit="$(git rev-parse HEAD)"
+                git checkout "master" &>/dev/null
+
+                git_commits=()
+                while IFS= read -r line; do
+                    git_commits+=("$line")
+                done <<<"$(git log --format=format:"%h: %s" 2>/dev/null)"
+
+                git checkout "$save_commit" &>/dev/null
+
+                git_tags+=("latest")
+                _describe 'state' git_commits
+                ;;
+            checkout-version | checkout-v | s-version | s-v)
+                [ ${#words[@]} -gt 3 ] && _message 'No more argument' && return 0
+
+                save_commit="$(git rev-parse HEAD)"
+                git checkout "master" &>/dev/null
+
+                git_tags=()
+                while IFS= read -r line; do
+                    git_tags+=("$line")
+                done <<<"$(git show-ref --tags | sed -e "s/.*tags\///" 2>/dev/null)"
+                
+                git checkout "$save_commit" &>/dev/null
+
+                git_tags+=("latest")
+                _describe 'version' git_tags
+                ;;
+            *)
+                _message 'No more argument'
+                ;;
+        esac
+        ;;
+esac

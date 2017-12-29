@@ -1,0 +1,370 @@
+#!/usr/bin/env bash
+
+# set -x #DEBUG - Display commands and their arguments as they are executed.
+# set -v #VERBOSE - Display shell input lines as they are read.
+# set -n #EVALUATE - Check syntax of the script but don't execute.
+
+# -------------------------------------------------
+# Description:  version control for designer
+# Create by:    Kamontat Chantrachirathumrong
+# Requirement:  echo, printf      - show output
+#               ()                - array
+#               shift             - move argument
+#               test              - validate variable (-z -n -d -eq -ne -lt -gt)
+#               command           - check command exist
+#               bash substitution - replace,get,do action with variable
+#               read -r, read -ar - read 'data' from variable or command
+#               sed --expression  - replace specify string
+#               cat               - redirect less -> stdout
+#               return, exit      - get out for function or script with codes
+#               git               - subcommand
+#                    status       - show status
+#                    rev-parse    - get latest commit hash
+#                    add          - add to state
+#                    commit       - commit changes
+#                    tag          - deal with tag
+#                    show         - show commit or ref
+#                    init         - init git repository
+#                    checkout     - move current of state or version
+#                    rev-list     - count commit
+# Since:        29/Dec/2017
+# -------------------------------------------------
+# Version:      1.0.0  -- Complete
+# -------------------------------------------------
+
+hash_size="8"
+
+# error code
+unknown_error=1
+exist=2
+wrong_argument=3
+not_found=4
+
+# message
+gitexist="Already initial"
+gitnotexist="Never initial"
+nochange="Cannot save: no changes"
+checkout_not_found="Cannot checkout: NOT FOUND"
+
+# color
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+BLUE='\033[0;34m'
+
+RESET='\033[0m'
+
+help="
+workstation - version control of 'designer'
+Requirement - This script require 'git' command installed
+Description - This split workflow to 2 word. 
+              - State is work in process in case you didn't finish your work, 
+                but want to save that process for future reverse. 
+                This able to checkout by use 'hash string' which different to use.
+              - Version is completed work. This able to checkout using
+                'tag name' which a lot easier to use checkout command.
+Syntax      - []    - optional argument
+            - <>    - argument description
+            - (x|y) - 'x' and 'y' is the same command, You can use either 'x' or 'y'
+Accept arguments
+    For initial
+                 - \`ws (init|i)\`
+    For display (maintenance)
+                 - \`ws (display|d)\`
+    For save
+        State    - \`ws (save|s) (state|s) [message]\`
+        Version  - \`ws (save|s) (version|v) <name> [message]\`
+    For list
+        All      - \`ws (list|l)\`
+        State    - \`ws (list|l) (state|s)\`
+        Version  - \`ws (list|l) (version|v)\`
+    For checkout
+        Auto     - \`ws (checkout|c)\`
+        State    - \`ws (checkout|c) (state|s) <hash string>\`
+        Version  - \`ws (checkout|c) (version|v) <name>\`
+        Latest   - \`ws (checkout|c) (latest|master)\`
+    For remove
+                 - \`ws (teardown|t)\`
+    For help
+                 - \`ws (help|h)\`
+Creator - Kamontat Chantrachirathumrong"
+
+check_argument_size() {
+    exp_sizes=()
+    for ind in "${@}"; do
+        [[ $ind == "--" ]] && shift && break
+        exp_sizes+=("$ind")
+        shift
+    done
+
+    [ -z "${exp_sizes[*]}" ] && error "Cannot get argument size" $wrong_argument
+
+    ac_size="${#@}"
+    for expected in "${exp_sizes[@]}"; do
+        [ "$expected" -eq "$ac_size" ] && return 0
+    done
+    error "Cannot argument size (r=${exp_sizes[*]},g=$ac_size)" $wrong_argument
+}
+
+check_command() {
+    command -v "$1" &>/dev/null
+}
+
+check_state() {
+    [ "$1" == "state" ] || [ "$1" == "s" ] && return 0 || return 1
+}
+
+check_version() {
+    [ "$1" == "version" ] || [ "$1" == "v" ] && return 0 || return 1
+}
+
+check_git() {
+    [ -d ".git" ] && return 0 || return 1
+}
+
+_status() {
+    local t
+    t="$(git status --short)" && echo "$t"
+    [ -z "$t" ] && return 0 || return 1
+}
+
+_show_hash_size() {
+    hash="$1"
+    size="$2"
+    echo "${hash:0:size}"
+}
+
+_get_latest_commit() {
+    git rev-parse HEAD
+}
+
+_commit() {
+    git add . &>/dev/null
+    git commit --no-gpg-sign --message "$1" &>/dev/null
+
+    _get_latest_commit
+}
+
+_create_tag() {
+    git tag --annotate --force "$1" --message "$2"
+}
+
+_get_tag() {
+    array=()
+    while IFS= read -r line; do
+        array+=("$line")
+    done <<<"$(git tag --list)"
+
+    echo "${array[@]}"
+}
+
+_list_tag() {
+    local message
+    local unique_key commit_hash subject author date
+    unique_key="unique-key"
+
+    commit_hash="commit-hash"
+    subject="subject"
+    author="author"
+    date="date"
+    # no-patch - don't show difference
+    # all - list all tag
+    message="$(
+        git show \
+            --no-patch \
+            --format=format:"$unique_key $commit_hash: %h|%D|$subject: %s|$author: %cn|$date: %cr" \
+            --all --tags |
+            grep "^$unique_key" |
+            sed --expression="s/^$unique_key //"
+    )"
+
+    details=()
+    while IFS= read -r line; do
+        details+=("$line")
+    done <<<"${message}"
+
+    export details
+}
+
+init() {
+    [ -d ".git" ] && log "$gitexist" $exist
+    git init
+
+    exit 0
+}
+
+teardown() {
+    check_git || log "$gitnotexist" $not_found
+    rm -r .git
+
+    exit 0
+}
+
+_save_state() {
+    check_argument_size 0 1 -- "$@"
+    status="$(_status)" && log "$nochange" 0
+
+    echo "change detected"
+    echo "$status"
+    msg="$1" # optional
+    [ -z "$msg" ] && msg="$default_gitcommit"
+
+    hash_message="$(_commit "$msg")"
+
+    echo "saved with message '$msg' @$(_show_hash_size "$hash_message" $hash_size)"
+}
+
+_save_version() {
+    check_argument_size 1 2 -- "$@"
+    status="$(_status)"
+    name="$1"
+    msg="$2" # optional
+    [ -z "$msg" ] && msg="$default_dumpversion $name"
+
+    # commit only status exist
+    [ -n "$status" ] && hash_message="$(_commit "$msg")"
+    _create_tag "$name"
+
+    echo "saved version '$name' with message '$msg' @$(_show_hash_size "$hash_message" $hash_size)"
+}
+
+save() {
+    type="$1" && shift
+
+    check_state "$type" && _save_state "$@" && exit 0
+    check_version "$type" && _save_version "$@" && exit 0
+
+    error "either (state|s) or (version|v)" $wrong_argument
+}
+
+_list_state() {
+    check_argument_size 0 -- "$@"
+
+    git log --format=format:"%Cblue%h%Creset %s (%Cgreen%cr%Creset)" --no-decorate | cat
+}
+
+_list_version() {
+    check_argument_size 0 -- "$@"
+
+    _list_tag
+
+    for detail in "${details[@]}"; do
+        IFS="|"
+        read -ra each_tag_detail <<<"$detail"
+        c="${each_tag_detail[0]}" # commit hash
+        t="${each_tag_detail[1]}" # tag name
+        t="$(echo "$t" | grep --only-matching "tag: [^,]*")"
+        s="${each_tag_detail[2]}" # subject
+        a="${each_tag_detail[3]}" # author
+        d="${each_tag_detail[4]}" # date
+
+        echo "---------------------------------------------"
+        # short format
+        printf "$RED%s$RESET - %s ($GREEN%s$RESET)\n" "$t" "${s##*: }" "${d##*: }"
+        # long format
+        # printf "$RED%s$RESET - %s ($BLUE%s$RESET)\n" "$t" "${s##*: }" "${c##*: }"
+        # printf "by %s ($GREEN%s$RESET)\n" "${a##*: }" "${d##*: }"
+    done
+}
+
+_list_all() {
+    check_argument_size 0 -- "$@"
+
+    git log \
+        --format=format:"%Cblue%h%Creset (%Cred%D%Creset) %s (%Cgreen%cr%Creset)" \
+        --no-decorate |
+        cat |
+        sed -e "s/HEAD -> master, //"
+}
+
+list() {
+    type="$1" && shift
+
+    save_commit="$(_get_latest_commit)"
+    _checkout "master"
+
+    if check_state "$type"; then
+        _list_state "$@" || error "ERROR (state)" $unknown_error
+    elif check_version "$type"; then
+        _list_version "$@" || error "ERROR (version)" $unknown_error
+    else
+        _list_all "$@" || error "ERROR (all)" $unknown_error
+    fi
+
+    _checkout "$save_commit"
+}
+
+_checkout() {
+    check_argument_size 1 -- "$@"
+
+    input="$1"
+    [[ $input == "latest" ]] && input="master"
+
+    git checkout "$input" &>/dev/null ||
+        error "$checkout_not_found" $not_found
+
+    git show "$(_get_latest_commit)" --oneline --no-patch | cat
+}
+
+checkout() {
+    type="$1" && shift
+
+    check_state "$type" && _checkout "$@" && exit 0
+    check_version "$type" && _checkout "$@" && exit 0
+
+    _checkout "$type" "$@"
+}
+
+show_help() {
+    echo "$help"
+    exit 0
+}
+
+log() {
+    echo "$1"
+    [ -n "$2" ] &&
+        exit "$2"
+}
+
+error() {
+    log "$1 -- code='$2'" "$2" >&2
+}
+
+# App logic
+
+[ $# -eq 0 ] && show_help
+# [ $# -lt 2 ] && error "wrong argument number (>1)" $wrong_argument
+
+check_command "git" || error "git not found" $not_found
+
+command="$1"
+shift
+
+[ "$command" = "init" ] || [ "$command" = "i" ] &&
+    init
+
+[ "$command" = "teardown" ] || [ "$command" = "t" ] &&
+    teardown
+
+check_git || error "$gitnotexist" $not_found
+
+commit_size="$(git rev-list --all --count 2>/dev/null)"
+
+[ -z "$commit_size" ] && commit_size=0
+
+default_gitcommit="Update #$((commit_size + 1))"
+default_dumpversion="Dump version"
+
+[ "$command" = "save" ] || [ "$command" = "s" ] &&
+    save "$@"
+
+[ "$command" = "list" ] || [ "$command" = "l" ] &&
+    list "$@"
+
+[ "$command" = "checkout" ] || [ "$command" = "c" ] &&
+    checkout "$@"
+
+[ "$command" = "help" ] || [ "$command" = "h" ] &&
+    show_help
+
+exit 0
