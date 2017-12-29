@@ -281,7 +281,7 @@ list() {
     type="$1" && shift
 
     save_commit="$(_get_latest_commit)"
-    _checkout "master"
+    _checkout "master" >/dev/null
 
     if check_state "$type"; then
         _list_state "$@" || error "ERROR (state)" $unknown_error
@@ -291,7 +291,7 @@ list() {
         _list_all "$@" || error "ERROR (all)" $unknown_error
     fi
 
-    _checkout "$save_commit"
+    _checkout "$save_commit" >/dev/null
 }
 
 _checkout() {
