@@ -1,4 +1,4 @@
-# dgit(1) - Version control for designer
+# dgit(1) - Version control for designer ([TH](README-TH.md))
 
 - [Setup](#setup)
 - [Usage](#usage)
