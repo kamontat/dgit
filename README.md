@@ -3,6 +3,7 @@
 - [Setup](#setup)
 - [Usage](#usage)
 - [Example](#example)
+- [flow](#app-flow)
 - [Images](#images)
 - [Miscellaneous](#miscellaneous)
   - [Install Window](#install-window)
@@ -34,6 +35,20 @@ Setup is a little bit hard, please ask developer to set or you also can try by y
 1. `ws list all` - list all version and state
 1. `ws save version version-1 "finish dark mode"` - create new version with message
 1. `ws checkout version-1-light` - move to **version-1-light** version
+
+## App flow
+
+1. call inital - `ws init`
+1. (work)
+    1. (not complete) - save work using `ws save state`
+    1. (complete)     - save version using `ws save version v1-dark-theme`
+1. (make mistake)
+    1. (already save state or version) - checkout to previous version `ws checkout state c5d1c33`
+    1. (not save) - try to undo by yourself (**pray**)
+1. (a lot of version)
+    1. (compare) - go to other version `ws checkout version v1-hot-theme`
+1. complete project - `ws teardown`
+1. forget how to use - `ws help`
 
 ## Images
 
