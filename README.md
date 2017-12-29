@@ -41,7 +41,7 @@ Setup is a little bit hard, please ask developer to set or you also can try by y
 1. call inital - `ws init`
 1. (work)
     1. (not complete) - save work using `ws save state`
-    1. (complete)     - save version using `ws save version v1-dark-theme`
+    1. (complete) - save version using `ws save version v1-dark-theme`
 1. (make mistake)
     1. (already save state or version) - checkout to previous version `ws checkout state c5d1c33`
     1. (not save) - try to undo by yourself (**pray**)
