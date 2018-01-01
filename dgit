@@ -348,9 +348,11 @@ compare() {
 
         cp "$filename" "$t"
 
-        [ -z "$ext" ] && opt="-e"
+        [[ "$name" = "$ext" ]] && opt="-e"
         open "$opt" "$t"
     done 
+
+    echo "List temp file: ${tempname[*]}"
 
     _checkout "master" >/dev/null
 }
