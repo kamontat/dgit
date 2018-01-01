@@ -70,7 +70,7 @@ case "$state" in
                 git checkout "$save_commit" &>/dev/null
 
                 _alternative \
-                    'type:type:((state\:"state keyword" s\:"state keyword" version\:"version keyword" v\:"version keyword" latest\:"latest work"))' \
+                    'type:type:((state\:"state keyword" s\:"state keyword" version\:"version keyword" v\:"version keyword" latest\:"latest work" l\:"latest work"))' \
                     "commit:state:(${git_commits[*]})" \
                     "tag:version:(${git_tags[*]})"
 
