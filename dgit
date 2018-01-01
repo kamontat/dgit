@@ -71,7 +71,7 @@ Syntax      - []    - optional argument
 Accept arguments
     For initial
                  - \`ws (init|i)\`
-    For display (maintenance)
+    For display
                  - \`ws (display|d)\`
     For save
         State    - \`ws (save|s) (state|s) [message]\`
@@ -81,14 +81,17 @@ Accept arguments
         State    - \`ws (list|l) (state|s)\`
         Version  - \`ws (list|l) (version|v)\`
     For checkout
-        Auto     - \`ws (checkout|c)\`
-        State    - \`ws (checkout|c) (state|s) <hash string>\`
-        Version  - \`ws (checkout|c) (version|v) <name>\`
-        Latest   - \`ws (checkout|c) (latest|master)\`
+        Auto     - \`ws (get|g)\`
+        State    - \`ws (get|g) (state|s) <hash string>\`
+        Version  - \`ws (get|g) (version|v) <name>\`
+        Latest   - \`ws (get|g) (latest|master)\`
+    For compare (maintenance)
+        Version  - \`ws (compare|c) <version-1> <version-2>\`
     For remove
                  - \`ws (teardown|t)\`
-    For help
-                 - \`ws (help|h)\`
+    For command info
+        Help     - \`ws (help|h)\`
+        Version  - \`ws (version|v)\`
 Creator - Kamontat Chantrachirathumrong"
 
 check_argument_size() {
@@ -390,7 +393,7 @@ default_dumpversion="Dump version"
 [ "$command" = "list" ] || [ "$command" = "l" ] &&
     list "$@"
 
-[ "$command" = "checkout" ] || [ "$command" = "c" ] &&
+[ "$command" = "get" ] || [ "$command" = "g" ] &&
     checkout "$@"
 
 [ "$command" = "help" ] || [ "$command" = "h" ] &&

@@ -34,8 +34,8 @@ case "$state" in
             's\:save\ process'
             'list\:list\ saved\ process'
             'l\:list\ saved\ process'
-            'checkout\:checkout\ process'
-            'c\:checkout\ process'
+            'get\:get\ specify\ process'
+            'g\:get\ specify\ process'
         )
         extras=(
             'help\:show\ help\ text'
@@ -55,7 +55,7 @@ case "$state" in
             init | i | teardown | t | help | h | version | v | display | d)
                 _message 'No more argument'
                 ;;
-            checkout | c)
+            get | g)
                 ! [ -d .git ] && _message "initial project first" && return 1
 
                 save_commit="$(git rev-parse HEAD)"
@@ -108,7 +108,7 @@ case "$state" in
             list-state | list-s | l-state | l-s | list-version | list-v | l-version | l-v)
                 _message 'No more argument'
                 ;;
-            checkout-state | checkout-s | s-state | s-s)
+            get-state | get-s | g-state | g-s)
                 [ ${#words[@]} -gt 3 ] && _message 'No more argument' && return 0
 
                 save_commit="$(git rev-parse HEAD)"
@@ -124,7 +124,7 @@ case "$state" in
                 git_tags+=("latest")
                 _describe 'state' git_commits
                 ;;
-            checkout-version | checkout-v | s-version | s-v)
+            get-version | get-v | g-version | g-v)
                 [ ${#words[@]} -gt 3 ] && _message 'No more argument' && return 0
 
                 save_commit="$(git rev-parse HEAD)"
