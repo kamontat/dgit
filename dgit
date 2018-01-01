@@ -49,10 +49,12 @@ checkout_not_found="Cannot checkout: NOT FOUND"
 # color
 RED='\033[0;31m'
 GREEN='\033[0;32m'
-YELLOW='\033[0;33m'
-BLUE='\033[0;34m'
+# YELLOW='\033[0;33m'
+# BLUE='\033[0;34m'
 
 RESET='\033[0m'
+
+version="v1.0.0 - finish"
 
 help="
 workstation - version control of 'designer'
@@ -263,11 +265,11 @@ _list_version() {
     for detail in "${details[@]}"; do
         IFS="|"
         read -ra each_tag_detail <<<"$detail"
-        c="${each_tag_detail[0]}" # commit hash
+        # c="${each_tag_detail[0]}" # commit hash
         t="${each_tag_detail[1]}" # tag name
         t="$(echo "$t" | grep --only-matching "tag: [^,]*")"
         s="${each_tag_detail[2]}" # subject
-        a="${each_tag_detail[3]}" # author
+        # a="${each_tag_detail[3]}" # author
         d="${each_tag_detail[4]}" # date
 
         echo "---------------------------------------------"
@@ -332,6 +334,11 @@ show_help() {
     exit 0
 }
 
+show_version() {
+    echo "$version" 
+    exit 0
+}
+
 log() {
     echo "$1"
     [ -n "$2" ] &&
@@ -378,5 +385,8 @@ default_dumpversion="Dump version"
 
 [ "$command" = "help" ] || [ "$command" = "h" ] &&
     show_help
+
+[ "$command" = "version" ] || [ "$command" = "v" ] &&
+    show_version
 
 exit 0
