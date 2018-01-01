@@ -13,7 +13,7 @@ zstyle ':completion:ndd:descriptions' format '%B%d%b' # red color
 
 sv=("s" "v")
 
-_arguments -C \
+_arguments -c \
     '1:primary:->pri' \
     '2:secondary:->sec' \
     '*::arg:->args'
@@ -36,6 +36,8 @@ case "$state" in
             'l\:list\ saved\ process'
             'get\:get\ specify\ process'
             'g\:get\ specify\ process'
+            'compare\:compare\ file\ in\ difference\ version'
+            'c\:compare\ file\ in\ difference\ version'
         )
         extras=(
             'help\:show\ help\ text'
@@ -78,6 +80,10 @@ case "$state" in
                     "commit:state:(${git_commits[*]})" \
                     "tag:version:(${git_tags[*]})"
 
+                ;;
+            compare | c )
+                ! [ -d .git ] && _message "initial project first" && return 1
+                _alternative 'files:filename:_files'
                 ;;
             *)
                 ! [ -d .git ] && _message "initial project first" && return 1
@@ -138,6 +144,15 @@ case "$state" in
                 git checkout "$save_commit" &>/dev/null
 
                 git_tags+=("latest")
+                _describe 'version' git_tags
+                ;;
+            compare-* | c-* )
+                git_tags=()
+                while IFS= read -r line; do
+                    git_tags+=("$line")
+                done <<<"$(git show-ref --tags | sed -e "s/.*tags\///" 2>/dev/null)"
+                git_tags+=("latest")
+
                 _describe 'version' git_tags
                 ;;
             *)

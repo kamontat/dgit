@@ -39,12 +39,14 @@ unknown_error=1
 exist=2
 wrong_argument=3
 not_found=4
+change_detect=5
 
 # message
 gitexist="Already initial"
 gitnotexist="Never initial"
 nochange="Cannot save: no changes"
 checkout_not_found="Cannot checkout: NOT FOUND"
+savefirst="Changes detected, cannot continue"
 
 # color
 RED='\033[0;31m'
@@ -86,7 +88,7 @@ Accept arguments
         Version  - \`ws (get|g) (version|v) <name>\`
         Latest   - \`ws (get|g) (latest|master)\`
     For compare (maintenance)
-        Version  - \`ws (compare|c) <version-1> <version-2>\`
+        Version  - \`ws (compare|c) <filename> <version-1> <version-2>\`
     For remove
                  - \`ws (teardown|t)\`
     For command info
@@ -327,6 +329,8 @@ list() {
 compare() {
     local tempname t tags filename
     filename="$1"; shift
+
+    status="$(_status)" || error "$savefirst" $change_detect
 
     tempname=()
     tags=("$@")
