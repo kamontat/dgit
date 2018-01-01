@@ -210,6 +210,13 @@ teardown() {
     exit 0
 }
 
+display() {
+    status="$(_status)" && log "$nochange" 0
+
+    echo "change detected"
+    echo "$status"
+}
+
 _save_state() {
     check_argument_size 0 1 -- "$@"
     status="$(_status)" && log "$nochange" 0
@@ -373,6 +380,9 @@ commit_size="$(git rev-list --all --count 2>/dev/null)"
 
 default_gitcommit="Update #$((commit_size + 1))"
 default_dumpversion="Dump version"
+
+[ "$command" = "display" ] || [ "$command" = "d" ] &&
+    display
 
 [ "$command" = "save" ] || [ "$command" = "s" ] &&
     save "$@"
