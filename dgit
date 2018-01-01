@@ -127,6 +127,12 @@ check_git() {
     [ -d ".git" ] && return 0 || return 1
 }
 
+_gen_temp() {
+    name="$1"
+    [ -z "$name" ] && name="dgit_temp"
+    mktemp -u -t "$name"
+}
+
 _status() {
     local t
     t="$(git status --short)" && echo "$t"
@@ -318,6 +324,25 @@ list() {
     _checkout "$save_commit" >/dev/null
 }
 
+compare() {
+    local tempname t tags filename
+    filename="$1"; shift
+
+    tempname=()
+    tags=("$@")
+
+    for t in "${tags[@]}"; do
+        _checkout "$t" || continue
+        echo "go to tag: $t"
+
+        t="$(_gen_temp "$filename")"
+        tempname+=("$t")
+
+        cp "$filename" "$t"
+        open "$t"
+    done 
+}
+
 _checkout() {
     check_argument_size 1 -- "$@"
 
@@ -392,6 +417,9 @@ default_dumpversion="Dump version"
 
 [ "$command" = "list" ] || [ "$command" = "l" ] &&
     list "$@"
+
+[ "$command" = "compare" ] || [ "$command" = "c" ] && 
+    compare "$@"
 
 [ "$command" = "get" ] || [ "$command" = "g" ] &&
     checkout "$@"
