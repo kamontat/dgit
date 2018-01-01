@@ -343,7 +343,7 @@ compare() {
         ext="${filename##*.}"
         opt=""
 
-        t="$(_gen_temp "$name").${ext}"
+        t="$(_gen_temp "${name}-${t}").${ext}"
         tempname+=("$t")
 
         cp "$filename" "$t"
@@ -351,6 +351,8 @@ compare() {
         [ -z "$ext" ] && opt="-e"
         open "$opt" "$t"
     done 
+
+    _checkout "master" >/dev/null
 }
 
 _checkout() {
