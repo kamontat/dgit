@@ -56,7 +56,7 @@ GREEN='\033[0;32m'
 
 RESET='\033[0m'
 
-version="v1.0.0 - finish"
+version="v3 - add compare, version and display command"
 
 help="
 workstation - version control of 'designer'
