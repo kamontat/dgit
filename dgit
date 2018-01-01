@@ -29,8 +29,6 @@
 #                    rev-list     - count commit
 # Since:        29/Dec/2017
 # -------------------------------------------------
-# Version:      1.0.0  -- Complete
-# -------------------------------------------------
 
 hash_size="8"
 
@@ -56,7 +54,7 @@ GREEN='\033[0;32m'
 
 RESET='\033[0m'
 
-version="v3 - add compare, version and display command"
+version="v4 - Finish compare (MacOS)"
 
 help="
 workstation - version control of 'designer'
