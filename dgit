@@ -145,6 +145,14 @@ _commit() {
     _get_latest_commit
 }
 
+_stash_push() {
+    git stash push &>/dev/null
+}
+
+_stash_pop() {
+    git checkout stash -- . &>/dev/null
+}
+
 _create_tag() {
     git tag --annotate --force "$1" --message "$2"
 }
@@ -230,6 +238,10 @@ _save_version() {
 
 save() {
     type="$1" && shift
+    # to avoid known branch
+    _stash_push >/dev/null
+    _checkout "master" >/dev/null
+    _stash_pop >/dev/null
 
     check_state "$type" && _save_state "$@" && exit 0
     check_version "$type" && _save_version "$@" && exit 0
@@ -298,7 +310,7 @@ _checkout() {
     check_argument_size 1 -- "$@"
 
     input="$1"
-    [[ $input == "latest" ]] && input="master"
+    [[ $input == "latest" ]] || [[ $input == "l" ]] && input="master"
 
     git checkout "$input" &>/dev/null ||
         error "$checkout_not_found" $not_found
