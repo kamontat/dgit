@@ -359,7 +359,7 @@ _checkout() {
     check_argument_size 1 -- "$@"
 
     input="$1"
-    [[ $input == "latest" ]] || [[ $input == "l" ]] && input="master"
+    [[ $input == "latest" ]] || [[ $input == "l" ]] || [[ $input == "" ]] && input="master"
 
     git checkout "$input" &>/dev/null ||
         error "$checkout_not_found" $not_found
