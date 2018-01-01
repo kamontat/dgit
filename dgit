@@ -338,12 +338,18 @@ compare() {
     for t in "${tags[@]}"; do
         _checkout "$t" || continue
         echo "go to tag: $t"
+        
+        name="${filename%%.*}"
+        ext="${filename##*.}"
+        opt=""
 
-        t="$(_gen_temp "$filename")"
+        t="$(_gen_temp "$name").${ext}"
         tempname+=("$t")
 
         cp "$filename" "$t"
-        open "$t"
+
+        [ -z "$ext" ] && opt="-e"
+        open "$opt" "$t"
     done 
 }
 
